@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/*
+  確認用のモーダル。data-controller="confirm" の要素の中に置く（frontend/controllers/confirm_controller.js）
+  使い方: <dialog th:replace="~{fragments :: confirmDialog('タイトル', 'ボタンの文字', true, ~{::#本文の id})}"></dialog>
+  ブラウザの <dialog> を使うので、Esc で閉じる・後ろを操作できない、が最初から付いている
+*/-->
+<dialog th:fragment="confirmDialog(title, confirmLabel, danger, body)" data-confirm-target="dialog" data-action="click->confirm#backdrop"
+        class="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-slate-900/95 p-0 text-slate-200 shadow-2xl shadow-black/50">
+    <div class="p-6">
+        <div class="flex items-center gap-3">
+            <span class="grid size-9 place-items-center rounded-full" th:classappend="${danger} ? 'bg-rose-500/15 text-rose-400' : 'bg-cyan-500/15 text-cyan-300'" th:text="${danger} ? '!' : '?'">?</span>
+            <h2 class="text-lg font-semibold text-white" th:text="${title}">タイトル</h2>
+        </div>
+        <div class="mt-4 text-sm text-slate-300"><div th:replace="${body}"></div></div>
+    </div>
+    <div class="flex justify-end gap-2 border-t border-white/10 bg-slate-950/40 px-6 py-4">
+        <button type="button" data-action="confirm#cancel" class="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5">キャンセル</button>
+        <button type="button" data-action="confirm#accept" data-confirm-target="acceptButton" autofocus
+                class="rounded-lg px-4 py-2 text-sm font-medium text-slate-950 shadow-lg disabled:opacity-60"
+                th:classappend="${danger} ? 'bg-rose-400 shadow-rose-500/20 hover:bg-rose-300' : 'bg-cyan-400 shadow-cyan-500/20 hover:bg-cyan-300'"
+                th:text="${confirmLabel}">確定</button>
+    </div>
+</dialog>
+
+<!--/* 削除ボタン。押すとモーダルで確認してから送る。icon が true なら小さいボタン */-->
+<div th:fragment="deleteButton(rsdt, back, icon)" data-controller="confirm" data-action="submit->confirm#open" class="inline-block">
+    <form method="post" th:action="@{/rsdt/{id}(id=${rsdt.routeId()},back=${back})}">
+        <input type="hidden" name="_method" value="delete">
+        <button type="submit" class="cursor-pointer text-rose-300 hover:bg-rose-500/10"
+                th:classappend="${icon} ? 'rounded-md px-2.5 py-1 text-xs ring-1 ring-rose-400/30' : 'rounded-lg px-4 py-2 text-sm ring-1 ring-rose-400/40'">削除</button>
+    </form>
+    <dialog th:replace="~{fragments :: confirmDialog('この行を削除しますか？', '削除する', true, ~{fragments :: deleteBody})}"></dialog>
+</div>
+
+<!--/* 削除のモーダルの本文（deleteButton の中で使う。rsdt はそこで渡されたもの） */-->
+<div th:fragment="deleteBody">
+    <p class="rounded-lg bg-slate-950/60 px-3 py-2 font-medium text-white" th:text="${rsdt.address()}">住所</p>
+    <p class="mt-2 font-mono text-xs text-slate-500" th:text="${rsdt.routeId()}">id</p>
+    <p class="mt-3">削除すると元に戻せません。</p>
+</div>
+
+<!--/* 更新のモーダルの本文。変わった項目の表は confirm_controller.js が作る */-->
+<div th:fragment="diffBody" data-confirm-target="diff"></div>
+
+<!--/* ページャー（pager は PagerView。URL はコントローラーで作ってある） */-->
+<nav th:fragment="pager(pager)" aria-label="ページ送り" class="flex flex-wrap items-center justify-center gap-1"
+     th:with="base='grid h-9 min-w-9 place-items-center rounded-lg px-3 text-sm transition'">
+    <a th:if="${pager.prevUrl() != null}" th:href="${pager.prevUrl()}" th:class="${base + ' text-slate-300 hover:bg-white/5'}">‹ 前へ</a>
+    <span th:if="${pager.prevUrl() == null}" th:class="${base + ' text-slate-600'}">‹ 前へ</span>
+    <th:block th:each="item : ${pager.items()}">
+        <span th:if="${item.page() == null}" class="px-1 text-slate-600">…</span>
+        <span th:if="${item.page() != null and item.page() == pager.page()}" aria-current="page" th:class="${base + ' bg-cyan-400/15 font-semibold text-cyan-300 ring-1 ring-cyan-400/40'}" th:text="${#numbers.formatInteger(item.page(), 1, 'COMMA')}">1</span>
+        <a th:if="${item.page() != null and item.page() != pager.page()}" th:href="${item.url()}" th:class="${base + ' text-slate-400 hover:bg-white/5 hover:text-white'}" th:text="${#numbers.formatInteger(item.page(), 1, 'COMMA')}">2</a>
+    </th:block>
+    <a th:if="${pager.nextUrl() != null}" th:href="${pager.nextUrl()}" th:class="${base + ' text-slate-300 hover:bg-white/5'}">次へ ›</a>
+    <span th:if="${pager.nextUrl() == null}" th:class="${base + ' text-slate-600'}">次へ ›</span>
+</nav>
+
+</body>
+</html>

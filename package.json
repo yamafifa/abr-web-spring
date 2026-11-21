@@ -1,0 +1,15 @@
+{
+  "name": "abr-web-spring",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "devDependencies": {
+    "@hotwired/stimulus": "3.2.2",
+    "@tailwindcss/vite": "4.3.5",
+    "tailwindcss": "4.3.5",
+    "vite": "8.3.6"
+  }
+}

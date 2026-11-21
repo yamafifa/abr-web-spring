@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 住居の SQL。#{...} はプレースホルダー（SQL インジェクションにならない） -->
+<mapper namespace="dev.abr.web.rsdt.RsdtMapper">
+
+  <sql id="columns">
+    lg_code, machiaza_id, blk_id, rsdt_id, rsdt2_id, city, ward, oaza_cho, chome, koaza, machiaza_dist,
+    blk_num, rsdt_num, rsdt_num2, basic_rsdt_div, rsdt_addr_flg, rsdt_addr_mtd_code, status_flg,
+    efct_date, ablt_date, src_code, remarks
+  </sql>
+
+  <sql id="whereKey">
+    WHERE lg_code = #{key.lgCode} AND machiaza_id = #{key.machiazaId} AND blk_id = #{key.blkId}
+      AND rsdt_id = #{key.rsdtId} AND rsdt2_id = #{key.rsdt2Id}
+  </sql>
+
+  <!--
+    検索条件。空の条件は使わない（<where> が、最初の AND を取ってくれる）
+    部分一致はインデックスが効かないので、全件を読む。LIKE の % _ \ は、Java の側でエスケープしてある（likeXxx）
+    blk_num・rsdt_num は完全一致（値はすべて数字なので、部分一致だと「1」で 10・21 なども出てしまうため）
+  -->
+  <sql id="whereSearch">
+    <where>
+      <if test="c.city != ''">AND (city LIKE #{c.likeCity} OR ward LIKE #{c.likeCity})</if>
+      <if test="c.town != ''">AND (oaza_cho LIKE #{c.likeTown} OR koaza LIKE #{c.likeTown})</if>
+      <if test="c.chome != ''">AND chome LIKE #{c.likeChome}</if>
+      <if test="c.blkNum != ''">AND blk_num = #{c.blkNum}</if>
+      <if test="c.rsdtNum != ''">AND rsdt_num = #{c.rsdtNum}</if>
+    </where>
+  </sql>
+
+  <select id="findByKey" resultType="dev.abr.web.rsdt.Rsdt">
+    SELECT <include refid="columns"/> FROM mt_rsdtdsp_rsdt <include refid="whereKey"/>
+  </select>
+
+  <select id="findByKeyForUpdate" resultType="dev.abr.web.rsdt.Rsdt">
+    SELECT <include refid="columns"/> FROM mt_rsdtdsp_rsdt <include refid="whereKey"/> FOR UPDATE
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(*) FROM mt_rsdtdsp_rsdt <include refid="whereSearch"/>
+  </select>
+
+  <select id="search" resultType="dev.abr.web.rsdt.Rsdt">
+    SELECT <include refid="columns"/> FROM mt_rsdtdsp_rsdt <include refid="whereSearch"/>
+    ORDER BY lg_code, machiaza_id, blk_id, rsdt_id, rsdt2_id
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <update id="update">
+    UPDATE mt_rsdtdsp_rsdt SET
+      city = #{v.city}, ward = #{v.ward}, oaza_cho = #{v.oazaCho}, chome = #{v.chome}, koaza = #{v.koaza},
+      machiaza_dist = #{v.machiazaDist}, blk_num = #{v.blkNum}, rsdt_num = #{v.rsdtNum}, rsdt_num2 = #{v.rsdtNum2},
+      basic_rsdt_div = #{v.basicRsdtDiv}, rsdt_addr_flg = #{v.rsdtAddrFlg}, rsdt_addr_mtd_code = #{v.rsdtAddrMtdCode},
+      status_flg = #{v.statusFlg}, efct_date = #{v.efctDate}, ablt_date = #{v.abltDate}, src_code = #{v.srcCode},
+      remarks = #{v.remarks}
+    <include refid="whereKey"/>
+  </update>
+
+  <delete id="delete">
+    DELETE FROM mt_rsdtdsp_rsdt <include refid="whereKey"/>
+  </delete>
+</mapper>
