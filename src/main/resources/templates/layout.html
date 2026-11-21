@@ -20,6 +20,11 @@
                 <span class="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-lime-300 to-green-500 text-sm font-bold text-slate-950 shadow-lg shadow-green-500/20">J</span>
                 <span class="font-semibold tracking-wide text-slate-100 group-hover:text-white">ABR 住居マスター</span>
             </a>
+            <!--/* DB 検索と Elasticsearch 検索の切り替え（currentPage はコントローラーが入れる） */-->
+            <nav class="ml-6 flex gap-1 text-sm" th:with="cur=${#ctx.containsVariable('currentPage') ? currentPage : ''}">
+                <a th:href="@{/}" class="rounded-lg px-3 py-1.5" th:classappend="${cur == 'db'} ? 'bg-white/10 font-medium text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'">DB 検索</a>
+                <a th:href="@{/es}" class="rounded-lg px-3 py-1.5" th:classappend="${cur == 'es'} ? 'bg-white/10 font-medium text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'">Elasticsearch 検索</a>
+            </nav>
             <span class="ml-auto rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-xs text-slate-400">mt_rsdtdsp_rsdt</span>
         </div>
     </header>

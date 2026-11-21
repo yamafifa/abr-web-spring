@@ -59,5 +59,86 @@
     <span th:if="${pager.nextUrl() == null}" th:class="${base + ' text-slate-600'}">次へ ›</span>
 </nav>
 
+<!--/* 検索条件のフォーム。GET で送るので、条件は URL に残る（ページ番号は 1 に戻る）。action は送り先（DB 検索か Elasticsearch 検索） */-->
+<section th:fragment="searchForm(c, perPage, action)" class="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl shadow-black/20 backdrop-blur"
+         th:with="inputClass='w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20'">
+    <form method="get" th:action="${action}" class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_9rem_6rem_6rem_auto_auto] lg:items-end">
+        <label class="block">
+            <span class="mb-1.5 block text-xs font-medium tracking-wide text-slate-400">市区町村</span>
+            <input type="text" name="city" th:value="${c.city()}" placeholder="例：世田谷" th:class="${inputClass}">
+        </label>
+        <label class="block">
+            <span class="mb-1.5 block text-xs font-medium tracking-wide text-slate-400">町字</span>
+            <input type="text" name="town" th:value="${c.town()}" placeholder="例：上北沢" th:class="${inputClass}">
+        </label>
+        <label class="block">
+            <span class="mb-1.5 block text-xs font-medium tracking-wide text-slate-400">丁目</span>
+            <input type="text" name="chome" th:value="${c.chome()}" placeholder="例：一丁目" th:class="${inputClass}">
+        </label>
+        <label class="block">
+            <span class="mb-1.5 block font-mono text-xs font-medium tracking-wide text-slate-400">blk_num</span>
+            <input type="text" name="blk" th:value="${c.blkNum()}" placeholder="例：6" inputmode="numeric" title="完全一致" th:class="${inputClass}">
+        </label>
+        <label class="block">
+            <span class="mb-1.5 block font-mono text-xs font-medium tracking-wide text-slate-400">rsdt_num</span>
+            <input type="text" name="rsdt" th:value="${c.rsdtNum()}" placeholder="例：1" inputmode="numeric" title="完全一致" th:class="${inputClass}">
+        </label>
+        <label class="block">
+            <span class="mb-1.5 block text-xs font-medium tracking-wide text-slate-400">表示件数</span>
+            <!--/* 件数を変えたら、すぐに検索し直す（frontend/controllers/auto_submit_controller.js） */-->
+            <select name="per" th:class="${inputClass + ' pr-8'}" data-controller="auto-submit" data-action="change->auto-submit#submit">
+                <option th:each="n : ${perPageOptions}" th:value="${n}" th:selected="${n == perPage}" th:text="${n + ' 件'}">15 件</option>
+            </select>
+        </label>
+        <button type="submit" class="cursor-pointer rounded-lg bg-gradient-to-r from-cyan-400 to-sky-500 px-6 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110">検索</button>
+    </form>
+</section>
+
+<!--/* 住居の一覧の表（DB 検索と Elasticsearch 検索で共通）。back は編集・削除のあとに戻る URL */-->
+<div th:fragment="rsdtTable(rows, back)" class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase tracking-wider text-slate-500">
+            <tr class="border-b border-white/5">
+                <th class="px-5 py-3 font-medium">住所</th>
+                <th class="px-3 py-3 font-medium">キー</th>
+                <th class="px-3 py-3 font-medium">efct_date</th>
+                <th class="px-3 py-3 font-medium">ablt_date</th>
+                <th class="px-5 py-3 text-right font-medium">操作</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+            <tr th:each="rsdt : ${rows}" class="transition hover:bg-cyan-400/[0.04]">
+                <td class="px-5 py-2.5 font-medium text-slate-100">
+                    <span th:text="${rsdt.address()}">住所</span>
+                    <span th:if="${rsdt.abltDate() != null}" class="ml-2 rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] text-slate-400">廃止</span>
+                </td>
+                <td class="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-slate-500" th:text="${rsdt.routeId()}">id</td>
+                <td class="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-slate-400" th:text="${rsdt.efctDate()}"></td>
+                <td class="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-slate-400" th:text="${rsdt.abltDate()}"></td>
+                <td class="whitespace-nowrap px-5 py-2.5">
+                    <div class="flex items-center justify-end gap-2">
+                        <a th:href="@{/rsdt/{id}/edit(id=${rsdt.routeId()},back=${back})}"
+                           class="rounded-md px-2.5 py-1 text-xs text-cyan-300 ring-1 ring-cyan-400/30 hover:bg-cyan-400/10">編集</a>
+                        <div th:replace="~{fragments :: deleteButton(${rsdt}, ${back}, true)}"></div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!--/* Elasticsearch 検索のページ送り（search_after）。ページ番号は無く、最初・前・次・最後へ進む */-->
+<nav th:fragment="esPager(pager)" aria-label="ページ送り" class="flex flex-wrap items-center justify-center gap-1"
+     th:with="base='grid h-9 min-w-9 place-items-center rounded-lg px-3 text-sm transition', on='text-slate-300 hover:bg-white/5', off='text-slate-600'">
+    <a th:if="${pager.firstUrl() != null}" th:href="${pager.firstUrl()}" th:class="${base + ' ' + on}">« 最初へ</a>
+    <span th:if="${pager.firstUrl() == null}" th:class="${base + ' ' + off}">« 最初へ</span>
+    <a th:if="${pager.prevUrl() != null}" th:href="${pager.prevUrl()}" th:class="${base + ' ' + on}">‹ 前へ</a>
+    <span th:if="${pager.prevUrl() == null}" th:class="${base + ' ' + off}">‹ 前へ</span>
+    <a th:if="${pager.nextUrl() != null}" th:href="${pager.nextUrl()}" th:class="${base + ' ' + on}">次へ ›</a>
+    <span th:if="${pager.nextUrl() == null}" th:class="${base + ' ' + off}">次へ ›</span>
+    <a th:if="${pager.lastUrl() != null}" th:href="${pager.lastUrl()}" th:class="${base + ' ' + on}">最後へ »</a>
+    <span th:if="${pager.lastUrl() == null}" th:class="${base + ' ' + off}">最後へ »</span>
+</nav>
+
 </body>
 </html>

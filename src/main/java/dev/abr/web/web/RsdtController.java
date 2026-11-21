@@ -1,6 +1,7 @@
 package dev.abr.web.web;
 
 import dev.abr.web.rsdt.Rsdt;
+import dev.abr.web.search.RsdtEsListQuery;
 import dev.abr.web.search.RsdtListQuery;
 import dev.abr.web.usecase.DeleteRsdt;
 import dev.abr.web.usecase.GetRsdt;
@@ -66,6 +67,11 @@ public class RsdtController {
     model.addAttribute("back", indexUrl(query.withPage(result.page()).toParams()));
     model.addAttribute("pager", PagerView.of(query, result.page(), result.totalPages()));
     model.addAttribute("perPageOptions", RsdtListQuery.PER_PAGE_OPTIONS);
+    model.addAttribute(
+        "esUrl",
+        EsRsdtController.esUrl(
+            new RsdtEsListQuery(query.criteria(), query.perPage(), null, null, false).toParams()));
+    model.addAttribute("currentPage", "db");
     return "rsdt/index";
   }
 

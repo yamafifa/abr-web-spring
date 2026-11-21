@@ -133,6 +133,37 @@ public record Rsdt(
         remarks);
   }
 
+  /**
+   * 列名 → 値（22 列）から作る。Elasticsearch の検索結果を、DB 検索と同じ部品で画面に出すため
+   *
+   * @param c 列名 → 値。日付は YYYY-MM-DD、無い値は null
+   */
+  public static Rsdt fromColumns(Map<String, String> c) {
+    return new Rsdt(
+        c.get("lg_code"),
+        c.get("machiaza_id"),
+        c.get("blk_id"),
+        c.get("rsdt_id"),
+        Objects.toString(c.get("rsdt2_id"), ""),
+        c.get("city"),
+        c.get("ward"),
+        c.get("oaza_cho"),
+        c.get("chome"),
+        c.get("koaza"),
+        c.get("machiaza_dist"),
+        c.get("blk_num"),
+        c.get("rsdt_num"),
+        c.get("rsdt_num2"),
+        c.get("basic_rsdt_div"),
+        c.get("rsdt_addr_flg"),
+        c.get("rsdt_addr_mtd_code"),
+        c.get("status_flg"),
+        c.get("efct_date") == null ? null : LocalDate.parse(c.get("efct_date")),
+        c.get("ablt_date") == null ? null : LocalDate.parse(c.get("ablt_date")),
+        c.get("src_code"),
+        c.get("remarks"));
+  }
+
   private static String joinNonEmpty(String sep, String... parts) {
     return Stream.of(parts).filter(s -> s != null && !s.isEmpty()).collect(Collectors.joining(sep));
   }
