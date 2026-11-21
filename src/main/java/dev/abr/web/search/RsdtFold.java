@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
  *
  * <p>CJK 互換漢字（例：U+FA10 の「塚」）はそのまま残す（MySQL は U+585A の「塚」と別の文字として扱うため）。
  *
- * <p>abr-batch の src/lib/fold.ts、Rails 版・Laravel 版・Symfony 版の RsdtFold と同じ処理。直すときはすべてを直す
+ * <p>abr-batch の src/lib/fold.ts、Rails 版・Laravel 版・Symfony 版の RsdtFold、TS 版の fold.ts
+ * と同じ処理。直すときはすべてを直す
  */
 public final class RsdtFold {
 
