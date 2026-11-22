@@ -86,7 +86,16 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<!-- IPv4 で待ち受ける。Java の既定（IPv6 のソケット）だと、Windows のブラウザから WSL の localhost:3000 を開けなかった -->
-					<jvmArguments>-Djava.net.preferIPv4Stack=true</jvmArguments>
+					<!-- 時刻は日本時間にする（PC の設定に頼らない） -->
+					<jvmArguments>-Djava.net.preferIPv4Stack=true -Duser.timezone=Asia/Tokyo</jvmArguments>
+				</configuration>
+			</plugin>
+			<!-- テストも日本時間で動かす -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-Duser.timezone=Asia/Tokyo</argLine>
 				</configuration>
 			</plugin>
 			<!-- 書き方をそろえる（./mvnw spotless:check で確かめる、./mvnw spotless:apply で直す） -->

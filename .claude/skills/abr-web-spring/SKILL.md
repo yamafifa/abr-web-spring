@@ -12,6 +12,7 @@ description: abr-web-spring（住居表示-住居マスターを検索・一覧�
 - DB は **abr-batch の MySQL を共用**（ポート 3307、テーブル `mt_rsdtdsp_rsdt`、1,752,573 件）。開発とテストは同じ DB（`abr`）
 - 勉強用に、同じものを TS・Rails・Laravel・Symfony でも作った。機能・画面・デザイン・ユースケースの名前（`SearchRsdt`・`GetRsdt`・`UpdateRsdt`・`DeleteRsdt`）をそろえる
 - サーバーは 127.0.0.1:3000（ほかの版と同じ）
+- 時刻は日本時間（`pom.xml` で起動とテストの JVM に `-Duser.timezone=Asia/Tokyo`）。DB の時刻は UTC のまま
 
 ## してはいけないこと（DB を共用しているため）
 
@@ -49,7 +50,7 @@ description: abr-web-spring（住居表示-住居マスターを検索・一覧�
 ## テストと確認
 
 ```bash
-./mvnw test             # 67 件、約 30 秒（コンパイルを含む）
+./mvnw test             # 86 件、約 30 秒（コンパイルを含む）
 ./mvnw spotless:check   # 指摘 0 件を保つ。直すときは ./mvnw spotless:apply
 npm run build           # JS・CSS のビルドが通るか
 ```
