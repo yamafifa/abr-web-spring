@@ -1,7 +1,7 @@
 # abr-web-spring
 
 ABR（アドレス・ベース・レジストリ）の住居表示-住居マスター（`mt_rsdtdsp_rsdt`、東京都 1,752,573 件）を検索して、一覧表示・編集・削除する Web アプリの Java（Spring Boot）版です。
-[abr-batch](https://github.com/yamafifa/abr-batch) で確かめた「大量のデータを部分一致で探すなら、元の DB ではなく、検索用のデータを作る」の効果を、DB 検索と Elasticsearch 検索の画面で比べられるようにしています。
+[abr-batch](https://github.com/yamafifa/abr-batch) で確かめた「大量のデータを部分一致で探すなら、元の DB ではなく、検索用のデータを作る」という考え方の効果を、DB 検索と Elasticsearch 検索の画面で比べられるようにしています。
 
 - Java 25（Temurin）＋ Spring Boot 4.1.2 ＋ MyBatis（mybatis-spring-boot-starter 4.1.0）＋ Thymeleaf ＋ Bean Validation ＋ Tailwind CSS 4 ＋ Stimulus（Vite）＋ JUnit 6
 - ビルドは Maven（`./mvnw`。Maven 3.10.0 を初回に `~/.m2` に落とす）
@@ -19,7 +19,7 @@ ABR（アドレス・ベース・レジストリ）の住居表示-住居マス�
 | 町字「西」 | 0.87〜0.90 秒 | 0.017〜0.018 秒 |
 | 条件なし | 0.26〜0.28 秒 | 0.011〜0.013 秒 |
 
-- DB 検索は `city LIKE '%町田%'` のような部分一致です。前に `%` が付く LIKE は MySQL のインデックスでは速くならないので、毎回 175 万行を全部読みます
+- DB 検索は `city LIKE '%町田%'` のような部分一致です。前に `%` が付く LIKE は MySQL のインデックスが効かないので、毎回約 175 万行をすべて読みます
 - Elasticsearch 検索は、abr-batch の `npm run es:index` で作った検索用のインデックスから探します。条件の意味と画面は DB 検索と同じです
 - 詳しくは下の「[Elasticsearch 検索](#elasticsearch-検索)」を参照
 
@@ -46,12 +46,12 @@ npm run build              # JS と CSS を src/main/resources/static/build/ に
 
 ## Elasticsearch 検索
 
-DB 検索（`/`）はそのまま残して、Elasticsearch で探す一覧（`/es`）を別に作りました。上のメニューで切り替えられ、それぞれの画面に「同じ条件で〜検索」のリンクがあります。
+DB 検索（`/`）はそのまま残して、Elasticsearch で探す一覧（`/es`）を別に作りました。上のメニューで切り替えられます。それぞれの画面には、もう一方で同じ条件を検索するリンク（「同じ条件で DB 検索」「同じ条件で Elasticsearch 検索」）があります。
 
-- **中身は `npm run es:index` を実行した時点の DB のコピー**です。画面に作成日時を出しています。この画面から編集・削除すると DB は変わりますが、Elasticsearch は次に `es:index` を実行するまで古いままです。食い違ったときは、DB 検索の画面と見比べてください
-- **ページ送りは「最初へ・前へ・次へ・最後へ」**で、ページ番号はありません。Elasticsearch は、先頭から 10,000 件より先へページ番号で進めないため、主キーの続きから取る方法（search_after）にしました
+- **中身は `npm run es:index` を実行した時点の DB のコピー**です。画面に作成日時を出しています。アプリで編集・削除すると DB は変わりますが、Elasticsearch の中身は次に `es:index` を実行するまで古いままです。結果が食い違ったときは、DB 検索の画面と見比べてください
+- **ページ送りは「最初へ・前へ・次へ・最後へ」**で、ページ番号はありません。Elasticsearch は、先頭から 10,000 件より先へページ番号で進めないため、前のページの最後の行の主キーを渡して、その続きから取る方法（search_after）にしました
 - **文字の扱いは MySQL に合わせています**：MySQL（utf8mb4_unicode_ci）は全角と半角、ひらがなとカタカナ、濁点の有無などを同じ文字として扱います。Elasticsearch でも同じ結果になるよう、入れる側（abr-batch の `src/lib/fold.ts`）と探す側（[RsdtFold.java](src/main/java/dev/abr/web/search/RsdtFold.java)）で同じように文字をそろえています。DB にある値すべて（1,159 種類）で、abr-batch と結果が同じになることを確かめました。直すときは abr-batch と、ほかの版の同じ処理もすべて直します
-- Elasticsearch には、Java 標準の `HttpClient` と、Spring Boot に入っている Jackson でつなぎます（[EsClient.java](src/main/java/dev/abr/web/es/EsClient.java)）。pom.xml は変えていません。接続先は `application.properties` の `abr.es.url`（環境変数 `ES_URL` で変えられます）。接続できないときは、画面にエラーの文を出します
+- Elasticsearch には、Java 標準の `HttpClient` と、Spring Boot に入っている Jackson でつなぎます（[EsClient.java](src/main/java/dev/abr/web/es/EsClient.java)）。pom.xml は変えていません。接続先は `application.properties` の `abr.es.url` です（`http://127.0.0.1:9200`。環境変数 `ES_URL` で変えられます）。接続できないときは、画面にエラーメッセージを出します
 - 検索結果は `Rsdt.fromColumns()` で record にして、DB 検索と同じ表の部品で出します。検索フォームと一覧の表は `fragments.html` の部品にして、2 つの画面で共通にしました
 
 ## 構成
@@ -105,4 +105,4 @@ DB 検索（`/`）はそのまま残して、Elasticsearch で探す一覧（`/e
 - **google-java-format 1.37.0 は、この環境（Java 25）で動かなかった**：Spotless が「整形できない」とだけ言って止まりました。原因は調べていません。2.0.0 にしたら動きました
 - **npm は、依存パッケージに数日前の版を選ぶ**：`npm install --before=2026-11-07` で入れ直しました
 - **データの性質**：丁目は「一丁目」と「３丁目」の書き方が混ざっていて、「3」で「３丁目」は見つかりますが、「三丁目」は見つかりません。画面の項目名は CSV の列名のままです
-- **時刻は日本時間**：`pom.xml` で、起動（spring-boot-maven-plugin）とテスト（maven-surefire-plugin）の JVM に `-Duser.timezone=Asia/Tokyo` を渡しています。書かなくても PC（WSL）の設定で日本時間になりますが、PC の設定に頼らないためです。DB の日付の列は DATE 型（時刻を持たない）なので、今は時刻で結果が変わる処理はありません。DB（MySQL）の時刻は UTC のままです
+- **時刻は日本時間**：`pom.xml` で、起動（spring-boot-maven-plugin）とテスト（maven-surefire-plugin）の JVM に `-Duser.timezone=Asia/Tokyo` を渡しています。書かなくても今の PC（WSL）の設定では日本時間になりますが、PC の設定が変わっても同じに動くように、書いています。DB の日付の列は DATE 型（時刻を持たない）なので、今は時刻で結果が変わる処理はありません。DB（MySQL）の時刻は UTC のままです

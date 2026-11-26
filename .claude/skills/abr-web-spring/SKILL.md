@@ -10,7 +10,7 @@ description: abr-web-spring（住居表示-住居マスターを検索・一覧�
 - Java 25（Temurin 25.0.5.1、mise の global）＋ Spring Boot 4.1.2 ＋ MyBatis（mybatis-spring-boot-starter 4.1.0、MyBatis 3.5.19）＋ Thymeleaf 3.1 ＋ Bean Validation（Hibernate Validator 9.1）＋ MySQL Connector/J 9.7 ＋ JUnit 6
 - ビルドは Maven Wrapper（`./mvnw`、Maven 3.10.0）。画面の JS・CSS は npm（Vite 8.3.6・Tailwind 4.3.5・Stimulus 3.2.2）
 - DB は **abr-batch の MySQL を共用**（ポート 3307、テーブル `mt_rsdtdsp_rsdt`、1,752,573 件）。開発とテストは同じ DB（`abr`）
-- 勉強用に、同じものを TS・Rails・Laravel・Symfony でも作った。機能・画面・デザイン・ユースケースの名前（`SearchRsdt`・`GetRsdt`・`UpdateRsdt`・`DeleteRsdt`）をそろえる
+- 勉強用に、同じものを TypeScript・Rails・Laravel・Symfony でも作った。機能・画面・デザイン・ユースケースの名前（`SearchRsdt`・`GetRsdt`・`UpdateRsdt`・`DeleteRsdt`）をそろえる
 - サーバーは 127.0.0.1:3000（ほかの版と同じ）
 - 時刻は日本時間（`pom.xml` で起動とテストの JVM に `-Duser.timezone=Asia/Tokyo`）。DB の時刻は UTC のまま
 
@@ -27,7 +27,8 @@ description: abr-web-spring（住居表示-住居マスターを検索・一覧�
 | `rsdt/Rsdt.java` | 1 行の record（22 列）、17 列の決まり（`ATTRIBUTE_RULES`）、住所（`address()`）、フォームに出す値（`formValues()`） |
 | `rsdt/RsdtKey.java`・`RsdtValues.java` | 主キーと URL の id の変換、更新に使う 17 列 |
 | `rsdt/RsdtMapper.java` ＋ `resources/mapper/RsdtMapper.xml` | SQL はここだけ。検索条件は `<sql id="whereSearch">` |
-| `search/` | 検索条件（LIKE のエスケープ `likeXxx()` も）と、一覧の URL ⇔ 状態 |
+| `search/` | 検索条件（LIKE のエスケープ `likeXxx()` も）と、一覧の URL ⇔ 状態。Elasticsearch 検索の URL ⇔ 状態（`RsdtEsListQuery`）と、文字をそろえる処理（`RsdtFold`。abr-batch の `fold.ts` と同じ）もここ |
+| `es/` | Elasticsearch の REST API の呼び出し（Java 標準の `HttpClient`）と、そのエラー |
 | `usecase/` | ユースケース（`call` を持つ `@Service`）。Mapper をコンストラクターで受け取る。書き込みは `@Transactional` |
 | `web/RsdtForm.java`・`IsoDate.java` | 入力チェック（Bean Validation の注釈）とエラーの文 |
 | `web/RsdtController.java` | パラメーターを読む → ユースケースを呼ぶ → 表示・redirect だけ |
@@ -41,9 +42,10 @@ description: abr-web-spring（住居表示-住居マスターを検索・一覧�
 
 1. `search/RsdtSearchCriteria.java` の項目（部分一致なら `likeXxx()` も）
 2. `resources/mapper/RsdtMapper.xml` の `whereSearch`
-3. `search/RsdtListQuery.java` の `fromParams`・`toParams`（URL の名前と上限の文字数）
-4. `templates/rsdt/index.html` の検索フォーム
-5. テスト（`RsdtListQueryTest`・`SearchRsdtTest`・`RsdtControllerTest`）と README
+3. `usecase/SearchRsdtEs.java` の `WILDCARDS`（部分一致）か `EXACTS`（完全一致）
+4. `search/RsdtListQuery.java` の `fromParams`・`toParams`（URL の名前と上限の文字数）
+5. `templates/fragments.html` の `searchForm`（DB 検索と Elasticsearch 検索で共通の検索フォーム）
+6. テスト（`RsdtListQueryTest`・`SearchRsdtTest`・`RsdtControllerTest`）と README
 
 部分一致か完全一致かは、値を見てから決める（`blk_num`・`rsdt_num` は全件が半角数字なので完全一致）。
 

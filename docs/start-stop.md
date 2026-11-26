@@ -4,6 +4,8 @@
 
 ## 起動
 
+先に Docker を起動しておきます。
+
 ### 1. DB を起動する（abr-batch のフォルダで）
 
 ```bash
@@ -11,9 +13,9 @@ cd ~/work/abr-batch
 npm run db:up
 ```
 
-すでに動いていれば不要です。Elasticsearch と Kibana も一緒に起動します。
+すでに DB が動いていれば、この手順は不要です。Elasticsearch と Kibana も一緒に起動します。
 
-Elasticsearch 検索（`/es`）を使うときは、インデックスを作っておきます（約 1 分。DB を変えたあとに、もう一度実行すると反映されます）。
+Elasticsearch 検索（`/es`）を使うときは、インデックスを作っておきます（約 1 分）。DB の中身を変えたあとは、もう一度実行すると Elasticsearch に反映されます。
 
 ```bash
 npm run es:index
@@ -31,7 +33,7 @@ npm run build
 
 - **Java・Thymeleaf・`application.properties` を変えたとき**は、Ctrl + C で止めて、起動し直します
 - **JS・CSS（`frontend/`）を変えたとき**は、`npm run build` をもう一度実行してから、アプリを起動し直します
-  - ビルドしたファイルは、起動のときに `target/classes` に写されたものが使われるため
+  - 起動のときに `target/classes` に写されたファイルが使われるので、起動し直さないと反映されません
   - ファイル名にハッシュを付けていないので、ブラウザで強制再読み込み（Ctrl + Shift + R）もします
 - 待ち受けは IPv4 の 127.0.0.1:3000 です（`pom.xml` に `-Djava.net.preferIPv4Stack=true` を書いてある。無いと Windows のブラウザから開けなかった）
 
@@ -63,5 +65,5 @@ DB を止めてもデータは消えません。
 
 ## 注意
 
-- ほかの版（TS・Rails・Laravel・Symfony）も 3000 番ポートを使います。ほかの版が動いていると起動できないので、先に止めてください
+- ほかの版（TypeScript・Rails・Laravel・Symfony）も 3000 番ポートを使います。ほかの版が動いていると起動できないので、先に止めてください
 - DB が止まっていると、画面を開けません（起動のときに止まるのか、画面を開いたときにエラーになるのかは試していません）
