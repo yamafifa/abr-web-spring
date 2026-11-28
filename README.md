@@ -107,3 +107,14 @@ DB 検索（`/`）はそのまま残して、Elasticsearch で探す一覧（`/e
 - **npm は、依存パッケージに数日前の版を選ぶ**：`npm install --before=2026-11-07` で入れ直しました
 - **データの性質**：丁目は「一丁目」と「３丁目」の書き方が混ざっていて、「3」で「３丁目」は見つかりますが、「三丁目」は見つかりません。画面の項目名は CSV の列名のままです
 - **時刻は日本時間**：`pom.xml` で、起動（spring-boot-maven-plugin）とテスト（maven-surefire-plugin）の JVM に `-Duser.timezone=Asia/Tokyo` を渡しています。書かなくても今の PC（WSL）の設定では日本時間になりますが、PC の設定が変わっても同じに動くように、書いています。DB の日付の列は DATE 型（時刻を持たない）なので、今は時刻で結果が変わる処理はありません。DB（MySQL）の時刻は UTC のままです
+
+## 出典・ライセンス
+
+このリポジトリのコードは [MIT License](LICENSE) です。
+
+使うデータは次のとおりです。MIT License は、このデータには当てはまりません。
+
+- 出典：「[アドレス・ベース・レジストリ](https://www.digital.go.jp/policies/base_registry_address)」（デジタル庁）
+- 利用規約：[公共データ利用規約（第1.0版）（PDL1.0）](https://www.digital.go.jp/policies/base_registry_address_tos)
+- データそのものはリポジトリに含めていません。DB と Elasticsearch の中身は、[abr-batch](https://github.com/yamafifa/abr-batch) でこのデータを手元で加工して入れたものです
+- README に載せた件数・計測結果・例は、このデータをもとに yamafifa が作成したものです
