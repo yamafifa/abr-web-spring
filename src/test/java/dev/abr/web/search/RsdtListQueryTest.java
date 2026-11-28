@@ -71,6 +71,29 @@ class RsdtListQueryTest {
   }
 
   @Test
+  void 半角カナは全角カナにする() {
+    // 濁点・半濁点は 1 文字にまとめる
+    var q = RsdtListQuery.fromParams(params("city", "ｶﾞｰﾃﾞﾝ", "town", "ﾊﾟｰｸ", "chome", "ｳﾞ"));
+
+    assertThat(q.criteria().city()).isEqualTo("ガーデン");
+    assertThat(q.criteria().town()).isEqualTo("パーク");
+    assertThat(q.criteria().chome()).isEqualTo("ヴ");
+  }
+
+  @Test
+  void 半角カナのほかは変えない() {
+    // 全角英数字・丸数字・互換漢字
+    assertThat(RsdtListQuery.fromParams(params("town", "３Ａ①塚ﾊﾟ")).criteria().town())
+        .isEqualTo("３Ａ①塚パ");
+  }
+
+  @Test
+  void 半角カナを全角にしてから長さで切る() {
+    assertThat(RsdtListQuery.fromParams(params("chome", "ﾊﾟ".repeat(20))).criteria().chome())
+        .isEqualTo("パ".repeat(20));
+  }
+
+  @Test
   void URLのクエリに戻すとき空の条件と既定値は省く() {
     assertThat(RsdtListQuery.fromParams(params()).toParams()).isEmpty();
     assertThat(
